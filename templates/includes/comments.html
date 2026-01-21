@@ -1,0 +1,27 @@
+{% if comments %}
+  <div class="mt-4">
+    <h5>Комментарии</h5>
+    {% for comment in comments %}
+      <div class="media mb-4">
+        <div class="media-body">
+          <h6 class="mt-0">
+            <a href="{% url 'blog:profile' comment.author.username %}" name="comment_{{ comment.id }}">
+              @{{ comment.author.username }}
+            </a>
+          </h6>
+          <small class="text-muted">{{ comment.created_at }}</small>
+          <br>
+          {{ comment.text|linebreaksbr }}
+        </div>
+        {% if user == comment.author %}
+          <span class="text-muted">(ваш комментарий)</span>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="mt-4">
+    <h5>Комментарии</h5>
+    <p class="text-muted">Комментариев пока нет</p>
+  </div>
+{% endif %}

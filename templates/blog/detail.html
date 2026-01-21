@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}
+  {{ post.title }} | {% if post.location and post.location.is_published %}{{ post.location.name }}{% else %}Планета Земля{% endif %} |
+  {{ post.pub_date|date:"d E Y" }}
+{% endblock %}
+{% block content %}
+  <div class="col d-flex justify-content-center">
+    <div class="card" style="width: 40rem;">
+      <div class="card-body">
+        {% if post.image %}
+          <a href="{{ post.image.url }}" target="_blank">
+            <img class="border-3 rounded img-fluid img-thumbnail mb-2 mx-auto d-block" src="{{ post.image.url }}">
+          </a>
+        {% endif %}
+        <h5 class="card-title">{{ post.title }}</h5>
+        <h6 class="card-subtitle mb-2 text-muted">
+          <small>
+            {% if not post.is_published %}
+              <p class="text-danger">Пост снят с публикации админом</p>
+            {% elif not post.category.is_published %}
+              <p class="text-danger">Выбранная категория снята с публикации админом</p>
+            {% endif %}
+            {{ post.pub_date|date:"d E Y, H:i" }} | {% if post.location and post.location.is_published %}{{ post.location.name }}{% else %}Планета Земля{% endif %}<br>
+            От автора <a class="text-muted" href="{% url 'blog:profile' post.author.username %}">@{{ post.author.username }}</a> в
+            категории {% include "includes/category_link.html" %}
+          </small>
+        </h6>
+        <p class="card-text">{{ post.text|linebreaksbr }}</p>
+        
+        <!-- БЛОК АВТОРА ПОСТА (редактирование и удаление) -->
+        {% if user == post.author %}
+          <div class="mb-2">
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'blog:edit_post' post.id %}" role="button">
+              ✏️ Отредактировать публикацию
+            </a>
+            <a class="btn btn-sm btn-outline-danger" href="{% url 'blog:delete_post' post.id %}" role="button">
+              🗑️ Удалить публикацию
+            </a>
+          </div>
+        {% endif %}
+        
+        <!-- КОММЕНТАРИИ -->
+        <div class="mt-4">
+          <h5>Комментарии ({{ post.comments.count }})</h5>
+          
+          {% if user.is_authenticated %}
+            <form method="post" action="{% url 'blog:add_comment' post.id %}">
+              {% csrf_token %}
+              <div class="mb-3">
+                <textarea name="text" class="form-control" rows="3" placeholder="Напишите комментарий..." required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">Отправить</button>
+            </form>
+          {% else %}
+            <p class="text-muted">Чтобы оставить комментарий, <a href="{% url 'login' %}">войдите</a>.</p>
+          {% endif %}
+          
+          <div class="mt-4">
+            {% for comment in post.comments.all %}
+              <div class="card mb-2">
+                <div class="card-body py-2">
+                  <div class="d-flex justify-content-between">
+                    <h6 class="card-subtitle mb-1">
+                      <a href="{% url 'blog:profile' comment.author.username %}">@{{ comment.author.username }}</a>
+                    </h6>
+                    <small class="text-muted">{{ comment.created_at|date:"d.m.Y H:i" }}</small>
+                  </div>
+                  <p class="card-text mb-1">{{ comment.text|linebreaksbr }}</p>
+                  
+                  <!-- КНОПКИ РЕДАКТИРОВАНИЯ И УДАЛЕНИЯ КОММЕНТАРИЯ -->
+                  {% if user == comment.author %}
+                    <div class="mt-1">
+                      <a href="{% url 'blog:edit_comment' post.id comment.id %}" class="btn btn-outline-secondary btn-sm">
+                        Редактировать
+                      </a>
+                      <a href="{% url 'blog:delete_comment' post.id comment.id %}" class="btn btn-outline-danger btn-sm">
+                        Удалить
+                      </a>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            {% empty %}
+              <p class="text-muted">Комментариев пока нет.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
