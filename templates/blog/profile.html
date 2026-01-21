@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Страница пользователя {{ profile_user.username }}{% endblock %}
+{% block content %}
+  <h1 class="mb-5 text-center">Страница пользователя {{ profile_user.username }}</h1>
+  <small>
+    <ul class="list-group list-group-horizontal justify-content-center mb-3">
+      <li class="list-group-item">
+        Имя пользователя: 
+        {% if profile_user.get_full_name %}
+          {{ profile_user.get_full_name }}
+        {% else %}
+          не указано
+        {% endif %}
+      </li>
+      <li class="list-group-item">
+        Регистрация: {{ profile_user.date_joined|date:"d E Y" }}
+      </li>
+      <li class="list-group-item">
+        Роль: {% if profile_user.is_superuser %}Администратор{% else %}Пользователь{% endif %}
+      </li>
+    </ul>
+    {% if user.is_authenticated and user == profile_user %}
+      <ul class="list-group list-group-horizontal justify-content-center">
+        <li class="list-group-item">
+          <a class="btn btn-sm text-muted" href="{% url 'blog:edit_profile' %}">Редактировать профиль</a>
+        </li>
+        <li class="list-group-item">
+          <a class="btn btn-sm text-muted" href="{% url 'password_change' %}">Изменить пароль</a>
+        </li>
+      </ul>
+    {% endif %}
+  </small>
+  <br>
+  <h3 class="mb-5 text-center">Публикации пользователя</h3>
+  {% for post in page_obj %}
+    <article class="mb-5">
+      <!-- НАЧАЛО: Добавленный блок с проверками статуса поста -->
+      {% if user == profile_user %}
+        {% if not post.is_published %}
+          <p class="text-danger"><strong>Пост снят с публикации админом</strong></p>
+        {% elif not post.category.is_published %}
+          <p class="text-danger"><strong>Категория снята с публикации админом</strong></p>
+        {% elif post.pub_date > now %}
+          <p class="text-info"><strong>Отложенная публикация</strong> (будет опубликовано {{ post.pub_date|date:"d E Y, H:i" }})</p>
+        {% endif %}
+      {% endif %}
+      <!-- КОНЕЦ -->
+      
+      {% include 'includes/post_card.html' %}
+    </article>
+  {% endfor %}
+  {% include 'includes/paginator.html' %}
+{% endblock %}
